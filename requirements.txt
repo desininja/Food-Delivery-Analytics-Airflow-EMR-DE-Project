@@ -1,1 +1,1 @@
-apache-airflow-providers-amazon
+apache-airflow-providers-amazon>=8.0.0
