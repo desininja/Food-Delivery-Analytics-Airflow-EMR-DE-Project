@@ -21,11 +21,12 @@ def processing_func(**context):
     for obj in s3.list_objects_v2(Bucket=S3_BUCKET, Prefix=S3_KEY)['Contents']:
         if 'Orders_data.csv' in obj['Key']:
             object_key = obj['Key']
-            print(f"File to process: {obj['Key']}")
-            context['task_instance'].xcom_push(key='s3_key', value=object_key)
-            print(f"Pushed S3 key to XCOM: {object_key}")
+            data_location_s3_uri = 's3://'+S3_BUCKET+'/'+object_key
+            print(f"File to process: {data_location_s3_uri}")
+            context['task_instance'].xcom_push(key='s3_key', value=data_location_s3_uri)
+            print(f"Pushed S3 key to XCOM: {data_location_s3_uri}")
 
-    return object_key
+    return data_location_s3_uri
 
 def pull_function(**context):
     s3_key = context['task_instance'].xcom_pull(task_ids='push_s3_key', key='s3_key')
