@@ -26,7 +26,7 @@ def log_s3_keys(**context):
 # DAG Configuration
 S3_BUCKET = "food-delivery-project"
 S3_KEY_PATTERN = "data-landing-zone/*.csv"
-EMR_CLUSTER_ID = "j-2LELAN0V48PU3"
+EMR_CLUSTER_ID = "j-3TKI57YPJFDLK"
 SPARK_SCRIPT_PATH = "s3://food-delivery-project/pyspark-scripts/pyspark_job.py"
 SPARK_OUTPUT_PATH = "s3://food-delivery-project/output-files/"
 
