@@ -1,5 +1,5 @@
 from airflow import DAG
-from airflow.providers.amazon.aws.sensors.s3_key import S3KeySensor
+from airflow.providers.amazon.aws.sensors.s3 import S3KeySensor
 from airflow.providers.amazon.aws.operators.emr import EmrAddStepsOperator
 from airflow.providers.amazon.aws.sensors.emr import EmrStepSensor
 from airflow.operators.python import PythonOperator
@@ -10,7 +10,7 @@ from datetime import timedelta,datetime
 
 S3_BUCKET = "food-delivery-project"
 S3_KEY_PATTERN = "data-landing-zone/*.csv"
-EMR_CLUSTER_ID = "j-A85L3528ODEX"
+EMR_CLUSTER_ID = "j-2LELAN0V48PU3"
 SPARK_SCRIPT_PATH = "s3://food-delivery-project/pyspark-scripts/pyspark_job.py"
 SPARK_OUTPUT_PATH = "s3://food-delivery-project/output-files/"
 
