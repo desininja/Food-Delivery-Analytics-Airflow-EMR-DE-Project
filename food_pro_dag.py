@@ -52,7 +52,7 @@ check_s3_for_file = S3KeySensor(
     wildcard_match=True,
     aws_conn_id='aws_default',
     timeout=18*60*60,
-    poke_interval=60,
+    poke_interval=15,
     dag=dag,
 )
 
