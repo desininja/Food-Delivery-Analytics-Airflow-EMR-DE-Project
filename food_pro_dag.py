@@ -3,31 +3,23 @@ from airflow.providers.amazon.aws.sensors.s3 import S3KeySensor
 from airflow.providers.amazon.aws.operators.emr import EmrAddStepsOperator
 from airflow.providers.amazon.aws.sensors.emr import EmrStepSensor
 from airflow.operators.python import PythonOperator
-from datetime import timedelta,datetime
-
+from datetime import timedelta, datetime
 
 # DAG Configuration
-
 S3_BUCKET = "food-delivery-project"
 S3_KEY_PATTERN = "data-landing-zone/*.csv"
-EMR_CLUSTER_ID = "j-A85L3528ODEX"
+EMR_CLUSTER_ID = "j-2LELAN0V48PU3"
 SPARK_SCRIPT_PATH = "s3://food-delivery-project/pyspark-scripts/pyspark_job.py"
 SPARK_OUTPUT_PATH = "s3://food-delivery-project/output-files/"
 
 default_args = {
-    'owner':'airflow',
-    'depends_on_past':False,
-    'email_on_failure':False,
-    'email_on_retry':False,
-    'retries':False,
-    'retry_delay':timedelta(minutes=3)
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'email_on_failure': False,
+    'email_on_retry': False,
+    'retries': False,
+    'retry_delay': timedelta(minutes=3)
 }
-
-def process_s3_key(**context):
-    # Get the detected S3 key from XCOMS
-    s3_key = context['task_instance'].xcom_pull(task_ids='check_s3_for_file')
-    print(f"Processing file: {s3_key}")
-    return s3_key
 
 dag = DAG(
     's3_to_emr_spark_with_xcoms',
@@ -38,19 +30,26 @@ dag = DAG(
 )
 
 check_s3_for_file = S3KeySensor(
-    task_id = 'check_s3_for_file',
-    bucket_name = S3_BUCKET,
-    bucket_key = S3_KEY_PATTERN,
+    task_id='check_s3_for_file',
+    bucket_name=S3_BUCKET,
+    bucket_key=S3_KEY_PATTERN,
     wildcard_match=True,
-    aws_conn_id ='aws_default',
-    timeout = 18*60*60,
-    poke_interval =60,
+    aws_conn_id='aws_default',
+    timeout=18*60*60,
+    poke_interval=60,
     dag=dag,
 )
 
 process_s3 = PythonOperator(
-    task_id = 'process_s3_key',
-    python_callable = process_s3_key,
+    task_id='process_s3_key',
+    python_callable=process_s3_key,
+    provide_context=True,
+    dag=dag,
+)
+
+log_s3_keys_task = PythonOperator(
+    task_id='log_s3_keys',
+    python_callable=log_s3_keys,
     provide_context=True,
     dag=dag,
 )
@@ -68,13 +67,13 @@ step_adder = EmrAddStepsOperator(
                 'spark-submit',
                 '--deploy-mode',
                 'cluster',
-               SPARK_SCRIPT_PATH,"{{task_instance.xcom_pull(task_ids='process_s3_key')}}",
+                SPARK_SCRIPT_PATH,
+                "{{ task_instance.xcom_pull(task_ids='process_s3_key', key='s3_key') }}",
             ],
         },
     }],
     dag=dag,
 )
-
 
 step_checker = EmrStepSensor(
     task_id='check_step',
@@ -87,5 +86,4 @@ step_checker = EmrStepSensor(
     dag=dag,
 )
 
-
-check_s3_for_file >> process_s3 >> step_adder >> step_checker
+check_s3_for_file >> log_s3_keys_task >> process_s3 >> step_adder >> step_checker
