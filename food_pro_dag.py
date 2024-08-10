@@ -7,15 +7,18 @@ from datetime import timedelta, datetime
 
 # Define your functions here
 
-def process_s3_key(**context):
-    # Get the detected S3 key from XCOMS
+def push_s3_key(**context):
     s3_key = context['task_instance'].xcom_pull(task_ids='check_s3_for_file')
+    context['task_instance'].xcom_push(key='s3_key', value=s3_key)
+    print(f"Pushed S3 key to XCOM: {s3_key}")
+
+def process_s3_key(**context):
+    s3_key = context['task_instance'].xcom_pull(task_ids='push_s3_key', key='s3_key')
     print(f"Processing file: {s3_key}")
     return s3_key
 
 def log_s3_keys(**context):
-    # Log the S3 keys for debugging
-    s3_key = context['task_instance'].xcom_pull(task_ids='check_s3_for_file')
+    s3_key = context['task_instance'].xcom_pull(task_ids='push_s3_key', key='s3_key')
     print(f"Logged S3 key: {s3_key}")
 
 # DAG Configuration
@@ -35,7 +38,7 @@ default_args = {
 }
 
 dag = DAG(
-    's3_to_emr_spark_with_xcoms_____pro_version',
+    's3_to_emr_spark_with_xcoms_pro_version',
     default_args=default_args,
     description="DAG to trigger EMR Spark job based on S3 file arrival using XCOMS",
     start_date=datetime(2021, 1, 1),
@@ -53,9 +56,9 @@ check_s3_for_file = S3KeySensor(
     dag=dag,
 )
 
-process_s3 = PythonOperator(
-    task_id='process_s3_key',
-    python_callable=process_s3_key,
+push_s3_key_task = PythonOperator(
+    task_id='push_s3_key',
+    python_callable=push_s3_key,
     provide_context=True,
     dag=dag,
 )
@@ -63,6 +66,13 @@ process_s3 = PythonOperator(
 log_s3_keys_task = PythonOperator(
     task_id='log_s3_keys',
     python_callable=log_s3_keys,
+    provide_context=True,
+    dag=dag,
+)
+
+process_s3 = PythonOperator(
+    task_id='process_s3_key',
+    python_callable=process_s3_key,
     provide_context=True,
     dag=dag,
 )
@@ -99,4 +109,4 @@ step_checker = EmrStepSensor(
     dag=dag,
 )
 
-check_s3_for_file >> log_s3_keys_task >> process_s3 >> step_adder >> step_checker
+check_s3_for_file >> push_s3_key_task >> log_s3_keys_task >> process_s3 >> step_adder >> step_checker
