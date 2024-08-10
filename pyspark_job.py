@@ -3,8 +3,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, when
 from pyspark.sql.types import StructType, StructField, StringType, DoubleType, TimestampType, IntegerType
 
-s3_file_path =  sys.argv[1]
-#'s3://food-delivery-project/data-landing-zone/2024-04-06_Orders_data.csv'
+s3_file_path =  's3://food-delivery-project/data-landing-zone/2024-04-06_Orders_data.csv'
 
 print(f"Processing file: {s3_file_path}")
 # Create a Spark session
