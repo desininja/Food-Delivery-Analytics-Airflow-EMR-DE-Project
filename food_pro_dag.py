@@ -5,6 +5,19 @@ from airflow.providers.amazon.aws.sensors.emr import EmrStepSensor
 from airflow.operators.python import PythonOperator
 from datetime import timedelta, datetime
 
+# Define your functions here
+
+def process_s3_key(**context):
+    # Get the detected S3 key from XCOMS
+    s3_key = context['task_instance'].xcom_pull(task_ids='check_s3_for_file')
+    print(f"Processing file: {s3_key}")
+    return s3_key
+
+def log_s3_keys(**context):
+    # Log the S3 keys for debugging
+    s3_key = context['task_instance'].xcom_pull(task_ids='check_s3_for_file')
+    print(f"Logged S3 key: {s3_key}")
+
 # DAG Configuration
 S3_BUCKET = "food-delivery-project"
 S3_KEY_PATTERN = "data-landing-zone/*.csv"
