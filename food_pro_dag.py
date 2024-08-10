@@ -8,7 +8,9 @@ from datetime import timedelta, datetime
 # Define your functions here
 
 def push_s3_key(**context):
+    print(context)
     s3_key = context['task_instance'].xcom_pull(task_ids='check_s3_for_file')
+    print(f"context['task_instance']: {context['task_instance']}")
     context['task_instance'].xcom_push(key='s3_key', value=s3_key)
     print(f"Pushed S3 key to XCOM: {s3_key}")
 
@@ -38,7 +40,7 @@ default_args = {
 }
 
 dag = DAG(
-    's3_to_emr_spark_with_xcoms_pro_version!!!!!!!!!',
+    's3_to_emr_spark_with_xcoms_pro_versionsssssssss',
     default_args=default_args,
     description="DAG to trigger EMR Spark job based on S3 file arrival using XCOMS",
     start_date=datetime(2021, 1, 1),
@@ -52,7 +54,7 @@ check_s3_for_file = S3KeySensor(
     wildcard_match=True,
     aws_conn_id='aws_default',
     timeout=18*60*60,
-    poke_interval=60,
+    poke_interval=15,
     dag=dag,
 )
 
@@ -90,8 +92,7 @@ step_adder = EmrAddStepsOperator(
                 'spark-submit',
                 '--deploy-mode',
                 'cluster',
-                SPARK_SCRIPT_PATH,
-                "{{ task_instance.xcom_pull(task_ids='process_s3_key', key='s3_key') }}",
+                SPARK_SCRIPT_PATH
             ],
         },
     }],
