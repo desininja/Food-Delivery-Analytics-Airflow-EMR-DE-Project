@@ -8,7 +8,9 @@ from datetime import timedelta, datetime
 # Define your functions here
 
 def push_s3_key(**context):
+    print(context)
     s3_key = context['task_instance'].xcom_pull(task_ids='check_s3_for_file')
+    print(f"context['task_instance']: {context['task_instance']}")
     context['task_instance'].xcom_push(key='s3_key', value=s3_key)
     print(f"Pushed S3 key to XCOM: {s3_key}")
 
@@ -90,8 +92,7 @@ step_adder = EmrAddStepsOperator(
                 'spark-submit',
                 '--deploy-mode',
                 'cluster',
-                SPARK_SCRIPT_PATH,
-                "{{ task_instance.xcom_pull(task_ids='process_s3_key', key='s3_key') }}",
+                SPARK_SCRIPT_PATH
             ],
         },
     }],
